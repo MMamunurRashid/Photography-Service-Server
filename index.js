@@ -50,6 +50,18 @@ async function run() {
 
     //reviews
 
+    app.get("/reviews", async (req, res) => {
+      let query = {};
+      if (req.query.packageName) {
+        query = {
+          packageName: req.query.packageName,
+        };
+      }
+      const cursor = reviewCollection.find(query);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+
     app.post("/reviews", async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
