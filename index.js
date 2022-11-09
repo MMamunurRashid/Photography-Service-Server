@@ -41,6 +41,14 @@ async function run() {
       const packages = await cursor.toArray();
       res.send(packages);
     });
+    app.get("/services/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const service = await packagesCollection.findOne(query);
+      res.send(service);
+    });
+
+    //reviews
   } finally {
   }
 }
