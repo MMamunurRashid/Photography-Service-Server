@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
@@ -19,6 +20,22 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+// verify jwt
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      res.status(401).send({ message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const packagesCollection = client
@@ -29,6 +46,16 @@ async function run() {
       .db("smile-photography")
       .collection("reviews");
 
+    // jwt
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1d",
+      });
+      res.send({ token });
+    });
+
+    // service
     app.get("/services-limit", async (req, res) => {
       const query = {};
       const cursor = packagesCollection.find(query);
@@ -55,7 +82,6 @@ async function run() {
     });
 
     //reviews
-
     app.get("/reviews", async (req, res) => {
       let query = {};
       if (req.query.packageName) {
@@ -68,7 +94,14 @@ async function run() {
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
-    app.get("/my-review", async (req, res) => {
+    //get my review
+    app.get("/my-review", verifyJWT, async (req, res) => {
+      const decoded = req.decoded;
+      console.log(decoded);
+      if (decoded.email !== req.query.email) {
+        res.status(403).send({ message: "unauthorized access" });
+      }
+
       let query = {};
       if (req.query.email) {
         query = {
