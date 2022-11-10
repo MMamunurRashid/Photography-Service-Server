@@ -48,6 +48,12 @@ async function run() {
       res.send(service);
     });
 
+    app.post("/services", async (req, res) => {
+      const service = req.body;
+      const result = await packagesCollection.insertOne(service);
+      res.send(result);
+    });
+
     //reviews
 
     app.get("/reviews", async (req, res) => {
@@ -77,6 +83,19 @@ async function run() {
     app.post("/reviews", async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    });
+
+    app.patch("/my-review/:id", async (req, res) => {
+      const id = req.params.id;
+      const reviewMessage = req.body.reviewMessage;
+      const query = { _id: ObjectId(id) };
+      const updateReview = {
+        $set: {
+          reviewMessage: reviewMessage,
+        },
+      };
+      const result = await reviewCollection.updateOne(query, updateReview);
       res.send(result);
     });
 
