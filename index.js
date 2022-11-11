@@ -89,8 +89,10 @@ async function run() {
           packageName: req.query.packageName,
         };
       }
-
-      const cursor = reviewCollection.find(query);
+      const options = {
+        sort: { date: -1 },
+      };
+      const cursor = reviewCollection.find(query, options);
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
